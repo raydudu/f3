@@ -231,6 +231,7 @@ static inline void move_to_dec(struct flow *fw)
 static void measure(int fd, struct flow *fw)
 {
 	long delay;
+    int ret;
 
 	fw->written_blocks++;
 	fw->total_written += fw->block_size;
@@ -238,7 +239,10 @@ static void measure(int fd, struct flow *fw)
 	if (fw->written_blocks < fw->blocks_per_delay)
 		return;
 
-	assert(!fdatasync(fd));
+    ret = fdatasync(fd);
+    if (ret < 0 ){
+        perror("fdatasync:");
+    }
 	assert(!gettimeofday(&fw->t2, NULL));
 	/* Help the kernel to help us. */
 	assert(!posix_fadvise(fd, 0, 0, POSIX_FADV_DONTNEED));
@@ -327,7 +331,10 @@ static void measure(int fd, struct flow *fw)
 
 static inline void end_measurement(int fd, struct flow *fw)
 {
-	assert(!fdatasync(fd));
+    int ret = fdatasync(fd);
+    if (ret < 0 ){
+        perror("fdatasync:");
+    }
 	/* Help the kernel to help us. */
 	assert(!posix_fadvise(fd, 0, 0, POSIX_FADV_DONTNEED));
 

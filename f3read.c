@@ -50,6 +50,7 @@ static void validate_file(const char *path, int number,
 	uint64_t offset, expected_offset;
 	int final_errno;
 	struct timeval t1, t2;
+    int ret;
 	/* Progress time. */
 	struct timeval pt1 = { .tv_sec = -1000, .tv_usec = 0 };
 
@@ -76,7 +77,10 @@ static void validate_file(const char *path, int number,
 	 * even when testing small memory cards without a remount, and
 	 * we should have a better reading-speed measurement.
 	 */
-	assert(!fdatasync(fd));
+    ret = fdatasync(fd);
+    if (ret < 0 ){
+        perror("fdatasync:");
+    }
 	assert(!posix_fadvise(fd, 0, 0, POSIX_FADV_DONTNEED));
 
 	/* Obtain initial time. */
