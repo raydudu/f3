@@ -1,5 +1,5 @@
-#define _POSIX_C_SOURCE 200112L
-#define _XOPEN_SOURCE 600
+//#define _POSIX_C_SOURCE 200112L
+//#define _XOPEN_SOURCE 600
 
 #include <assert.h>
 #include <stdint.h>
@@ -16,7 +16,7 @@
 #include "utils.h"
 
 static inline void update_dt(struct timeval *dt, const struct timeval *t1,
-	const struct timeval *t2)
+							 const struct timeval *t2)
 {
 	dt->tv_sec  += t2->tv_sec  - t1->tv_sec;
 	dt->tv_usec += t2->tv_usec - t1->tv_usec;
@@ -35,10 +35,10 @@ static inline void update_dt(struct timeval *dt, const struct timeval *t1,
 #define CLEAR	("\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b" \
 		 "\b\b\b\b\b\b\b\b\b\b\b\b\b")
 
-static void validate_file(const char *path, int number,
-	uint64_t *ptr_ok, uint64_t *ptr_corrupted, uint64_t *ptr_changed,
-	uint64_t *ptr_overwritten, uint64_t *ptr_size, int *ptr_read_all,
-	struct timeval *ptr_dt, int progress)
+static void validate_file(const char *path, long number,
+						  uint64_t *ptr_ok, uint64_t *ptr_corrupted, uint64_t *ptr_changed,
+						  uint64_t *ptr_overwritten, uint64_t *ptr_size, int *ptr_read_all,
+						  struct timeval *ptr_dt, int progress)
 {
 	char *full_fn;
 	const char *filename;
@@ -50,7 +50,7 @@ static void validate_file(const char *path, int number,
 	uint64_t offset, expected_offset;
 	int final_errno;
 	struct timeval t1, t2;
-    int ret;
+	int ret;
 	/* Progress time. */
 	struct timeval pt1 = { .tv_sec = -1000, .tv_usec = 0 };
 
@@ -77,10 +77,10 @@ static void validate_file(const char *path, int number,
 	 * even when testing small memory cards without a remount, and
 	 * we should have a better reading-speed measurement.
 	 */
-    ret = fdatasync(fd);
-    if (ret < 0 ){
-        perror("fdatasync:");
-    }
+	ret = fdatasync(fd);
+	if (ret < 0 ){
+		perror("fdatasync:");
+	}
 	assert(!posix_fadvise(fd, 0, 0, POSIX_FADV_DONTNEED));
 
 	/* Obtain initial time. */
@@ -103,9 +103,9 @@ static void validate_file(const char *path, int number,
 		p = sector + sizeof(offset);
 		error_count = 0;
 		for (; error_count <= TOLERANCE && p < ptr_end;
-			p += sizeof(rn)) {
+			   p += sizeof(rn)) {
 			rn = random_number(rn);
-			if (rn != *((__typeof__(rn) *) p))
+			if (rn != ((__typeof__(rn)) *p))
 				error_count++;
 		}
 
@@ -140,13 +140,13 @@ static void validate_file(const char *path, int number,
 	update_dt(ptr_dt, &t1, &t2);
 
 	*ptr_read_all = feof(f);
-	*ptr_size = ftell(f);
+	*ptr_size = (uint64_t) ftell(f); //TODO error check
 
 	PRINT_STATUS(progress ? CLEAR : "");
 	if (!*ptr_read_all) {
 		assert(ferror(f));
 		printf(" - NOT fully read due to \"%s\"",
-			strerror(final_errno));
+			   strerror(final_errno));
 	}
 	printf("\n");
 
@@ -169,7 +169,7 @@ static inline double dt_to_s(struct timeval *dt)
 }
 
 static void iterate_files(const char *path, const long *files,
-	long start_at, long end_at, int progress)
+						  long start_at, long end_at, int progress)
 {
 	uint64_t tot_ok, tot_corrupted, tot_changed, tot_overwritten, tot_size;
 	struct timeval tot_dt = { .tv_sec = 0, .tv_usec = 0 };
@@ -177,15 +177,15 @@ static void iterate_files(const char *path, const long *files,
 	const char *unit;
 	int and_read_all = 1;
 	int or_missing_file = 0;
-	int number = start_at;
+	long number = start_at;
 
 	tot_ok = tot_corrupted = tot_changed = tot_overwritten = tot_size = 0;
 	printf("                  SECTORS "
-		"     ok/corrupted/changed/overwritten\n");
+				   "     ok/corrupted/changed/overwritten\n");
 
 	while (*files >= 0) {
 		uint64_t sec_ok, sec_corrupted, sec_changed,
-			sec_overwritten, file_size;
+				sec_overwritten, file_size;
 		int read_all;
 
 		or_missing_file = or_missing_file || (*files != number);
@@ -200,8 +200,8 @@ static void iterate_files(const char *path, const long *files,
 		number++;
 
 		validate_file(path, *files, &sec_ok, &sec_corrupted,
-			&sec_changed, &sec_overwritten,
-			&file_size, &read_all, &tot_dt, progress);
+					  &sec_changed, &sec_overwritten,
+					  &file_size, &read_all, &tot_dt, progress);
 		tot_ok += sec_ok;
 		tot_corrupted += sec_corrupted;
 		tot_changed += sec_changed;
@@ -211,7 +211,7 @@ static void iterate_files(const char *path, const long *files,
 		files++;
 	}
 	assert(tot_size / SECTOR_SIZE ==
-		(tot_ok + tot_corrupted + tot_changed + tot_overwritten));
+		   (tot_ok + tot_corrupted + tot_changed + tot_overwritten));
 
 	/* Notice that not reporting `missing' files after the last file
 	 * in @files is important since @end_at could be very large.
@@ -224,7 +224,7 @@ static void iterate_files(const char *path, const long *files,
 	report("\t     Overwritten:", tot_overwritten);
 	if (or_missing_file)
 		printf("WARNING: Not all F3 files in the range %li to %li are available\n",
-			start_at + 1, end_at + 1);
+			   start_at + 1, end_at + 1);
 	if (!and_read_all)
 		printf("WARNING: Not all data was read due to I/O error(s)\n");
 
@@ -247,7 +247,7 @@ int main(int argc, char **argv)
 		return rc;
 
 	files = ls_my_files(path, start_at, end_at);
-	/* If stdout isn't a terminal, supress progress. */
+	/* If stdout isn't a terminal, suppress progress. */
 	progress = isatty(STDOUT_FILENO);
 	iterate_files(path, files, start_at, end_at, progress);
 	free((void *)files);

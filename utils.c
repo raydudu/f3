@@ -1,23 +1,13 @@
-#define _GNU_SOURCE
-
-#if __APPLE__ && __MACH__
-
-#define _DARWIN_C_SOURCE
-
-#include <fcntl.h>	/* For function fcntl.	*/
-
-#endif	/* Apple Macintosh */
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
 #include <assert.h>
 #include <limits.h>
-#include <sys/types.h>
 #include <dirent.h>
 #include <errno.h>
 #include <err.h>
+#include <fcntl.h>	/* For function fcntl on Apple */
 
 #include "version.h"
 #include "utils.h"
@@ -160,12 +150,12 @@ static long number_from_filename(const char *filename)
 
 /* Don't call this function directly, use ls_my_files() instead. */
 static long *__ls_my_files(DIR *dir, long start_at, long end_at,
-	int *pcount, int *pindex)
+	size_t *pcount, size_t  *pindex)
 {
 	struct dirent *entry;
 	const char *filename;
 	long number, *ret;
-	int my_index;
+	size_t my_index;
 
 	entry = readdir(dir);
 	if (!entry) {
@@ -198,14 +188,14 @@ static long *__ls_my_files(DIR *dir, long start_at, long end_at,
 /* To be used with qsort(3). */
 static int cmpintp(const void *p1, const void *p2)
 {
-	return *(const long *)p1 - *(const long *)p2;
+	return (int)(*(const long *)p1 - *(const long *)p2);
 }
 
 const long *ls_my_files(const char *path, long start_at, long end_at)
 {
 	DIR *dir = opendir(path);
-	int my_count;
-	int my_index;
+	size_t my_count;
+	size_t my_index;
 	long *ret;
 
 	if (!dir)
