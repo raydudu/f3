@@ -6,8 +6,10 @@
 #include <limits.h>
 #include <dirent.h>
 #include <errno.h>
-#include <err.h>
+
+#ifdef __APPLE__
 #include <fcntl.h>	/* For function fcntl on Apple */
+#endif
 
 #include "version.h"
 #include "utils.h"
@@ -44,8 +46,9 @@ int is_my_file(const char *filename)
 
 char *full_fn_from_number(const char **filename, const char *path, long num)
 {
-	char *str;
-	assert(asprintf(&str, "%s/%li.h2w", path, num + 1) > 0);
+    //TODO cleanup
+	char *str = malloc(128);
+	assert(sprintf(str, "%s/%li.h2w", path, num + 1) > 0);
 	*filename = str + strlen(path) + 1;
 	return str;
 }
@@ -56,7 +59,7 @@ char *full_fn_from_number(const char **filename, const char *path, long num)
 #define START_AT_TEXT "--start-at="
 #define   END_AT_TEXT   "--end-at="
 
-static inline int is_param(const char *text, const char *param)
+/*TODO static inline*/ int is_param(const char *text, const char *param)
 {
 	return !strncmp(param, text, strlen(text));
 }
@@ -199,7 +202,7 @@ const long *ls_my_files(const char *path, long start_at, long end_at)
 	long *ret;
 
 	if (!dir)
-		err(errno, "Can't open path %s", path);
+		fprintf(stderr, "Can't open path %s: %s\n", path, strerror(errno));
 
 	my_count = 0;
 	ret = __ls_my_files(dir, start_at, end_at, &my_count, &my_index);
@@ -215,6 +218,15 @@ void print_header(FILE *f, const char *name)
 	"Copyright (C) 2010 Digirati Internet LTDA.\n"
 	"This is free software; see the source for copying conditions.\n"
 	"\n", name);
+}
+
+long delay_ms(const struct timeval *t1, const struct timeval *t2) {
+    return	(t2->tv_sec  - t1->tv_sec)  * 1000 +
+              (t2->tv_usec - t1->tv_usec) / 1000;
+}
+
+uint64_t pseudornd_number(uint64_t prv_number) {
+	return prv_number * 4294967311ULL + 17;
 }
 
 #if __APPLE__ && __MACH__

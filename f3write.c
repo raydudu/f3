@@ -8,14 +8,13 @@
 #include <stdio.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-#include <sys/statvfs.h>
 #include <sys/time.h>
 #include <errno.h>
 #include <unistd.h>
-#include <err.h>
 #include <math.h>
 
 #include "utils.h"
+#include <freespace.h>
 
 static uint64_t fill_buffer(void *buf, size_t size, uint64_t offset)
 {
@@ -35,7 +34,7 @@ static uint64_t fill_buffer(void *buf, size_t size, uint64_t offset)
         ptr_next_sector = p + SECTOR_SIZE;
         p += sizeof(offset);
         for (; p < ptr_next_sector; p += sizeof(rn)) {
-            rn = random_number(rn);
+            rn = pseudornd_number(rn);
             memmove(p, &rn, sizeof(rn));
         }
         assert(p == ptr_next_sector);
@@ -87,7 +86,7 @@ struct flow {
     struct timeval	t1, t2;
 };
 
-static inline void move_to_inc_at_start(struct flow *fw)
+/*TODO static inline*/ void move_to_inc_at_start(struct flow *fw)
 {
     fw->step = 1;
     fw->state = FW_INC;
@@ -110,13 +109,13 @@ static void init_flow(struct flow *fw, uint64_t total_size, int progress)
     move_to_inc_at_start(fw);
 }
 
-static inline void start_measurement(struct flow *fw)
+/*TODO static inline*/ void start_measurement(struct flow *fw)
 {
     fw->written_blocks = 0;
     assert(!gettimeofday(&fw->t1, NULL));
 }
 
-static inline void repeat_ch(char ch, int count)
+/*TODO static inline*/ void repeat_ch(char ch, int count)
 {
     while (count > 0) {
         printf("%c", ch);
@@ -134,7 +133,7 @@ static void erase(int count)
 }
 
 /* Average writing speed in byte/s. */
-static inline double get_avg_speed(struct flow *fw)
+/*TODO static inline*/ double get_avg_speed(struct flow *fw)
 {
     return	(double)(fw->measured_blocks * fw->block_size * 1000) /
               (double)(fw->measurements * fw->delay_ms);
@@ -177,13 +176,13 @@ static int pr_time(double sec)
     return tot + c;
 }
 
-static inline void update_mean(struct flow *fw)
+/*TODO static inline*/ void update_mean(struct flow *fw)
 {
     fw->measurements++;
     fw->measured_blocks += fw->written_blocks;
 }
 
-static inline void move_to_steady(struct flow *fw)
+/*TODO static inline */void move_to_steady(struct flow *fw)
 {
     update_mean(fw);
     fw->state = FW_STEADY;
@@ -205,7 +204,7 @@ static void move_to_search(struct flow *fw, int bpd1, int bpd2)
     fw->state = FW_SEARCH;
 }
 
-static inline void dec_step(struct flow *fw)
+/*TODO static inline */void dec_step(struct flow *fw)
 {
     if (fw->blocks_per_delay - fw->step > 0) {
         fw->blocks_per_delay -= fw->step;
@@ -214,19 +213,19 @@ static inline void dec_step(struct flow *fw)
         move_to_search(fw, 1, fw->blocks_per_delay + fw->step / 2);
 }
 
-static inline void inc_step(struct flow *fw)
+/*TODO static inline*/ void inc_step(struct flow *fw)
 {
     fw->blocks_per_delay += fw->step;
     fw->step *= 2;
 }
 
-static inline void move_to_inc(struct flow *fw)
+/*TODO static inline */void move_to_inc(struct flow *fw)
 {
     move_to_inc_at_start(fw);
     inc_step(fw);
 }
 
-static inline void move_to_dec(struct flow *fw)
+/*TODO static inline*/ void move_to_dec(struct flow *fw)
 {
     fw->step = 1;
     fw->state = FW_DEC;
@@ -334,7 +333,7 @@ static void measure(int fd, struct flow *fw)
     start_measurement(fw);
 }
 
-static inline void end_measurement(int fd, struct flow *fw)
+/*TODO static inline*/ void end_measurement(int fd, struct flow *fw)
 {
     int ret = fdatasync(fd);
     if (ret < 0 ){
@@ -354,13 +353,15 @@ static int create_and_fill_file(const char *path, long number, size_t size,
     char *full_fn;
     const char *filename;
     int fd, fine;
-    char buf[fw->block_size];
+    char *buf;
     size_t remaining;
     uint64_t offset;
     ssize_t written;
 
     assert(size > 0);
     assert(size % fw->block_size == 0);
+
+    buf = malloc(fw->block_size); //TODO errcheck
 
     /* Create the file. */
 
@@ -375,7 +376,7 @@ static int create_and_fill_file(const char *path, long number, size_t size,
             printf("No space left.\n");
             goto out;
         }
-        err(errno, "Can't create file %s", full_fn);
+        fprintf(stderr, "Can't create file %s: %s\n", full_fn, strerror(errno));
     }
     assert(fd >= 0);
 
@@ -392,7 +393,7 @@ static int create_and_fill_file(const char *path, long number, size_t size,
                 fine = 0;
                 break;
             } else
-                err(errno, "Write to file %s failed", full_fn);
+                fprintf(stderr, "Write to file %s failed: %s\n", full_fn, strerror(errno));
         }
         assert(written == fw->block_size);
         remaining -= written;
@@ -405,18 +406,12 @@ static int create_and_fill_file(const char *path, long number, size_t size,
     printf("OK!\n");
 
     out:
+    free(buf);
     free(full_fn);
     return fine;
 }
 
-static inline uint64_t get_freespace(const char *path)
-{
-    struct statvfs fs;
-    assert(!statvfs(path, &fs));
-    return (uint64_t)fs.f_frsize * (uint64_t)fs.f_bfree;
-}
-
-static inline void pr_freespace(uint64_t fs)
+/*TODO static inline*/ void pr_freespace(uint64_t fs)
 {
     double f = (double)fs;
     const char *unit = adjust_unit(&f);
@@ -472,7 +467,7 @@ static void unlink_old_files(const char *path, long start_at, long end_at)
         assert(full_fn);
         printf("Removing old file %s ...\n", filename);
         if (unlink(full_fn))
-            err(errno, "Can't remove file %s", full_fn);
+            fprintf(stderr, "Can't remove file %s: %s\n", full_fn, strerror(errno));
         number++;
         free(full_fn);
     }
