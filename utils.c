@@ -8,7 +8,7 @@
 #include <errno.h>
 
 #ifdef __APPLE__
-#include <fcntl.h>	/* For function fcntl on Apple */
+#include <fcntl.h>    /* For function fcntl on Apple */
 #endif
 
 #include "version.h"
@@ -16,41 +16,41 @@
 
 const char *adjust_unit(double *ptr_bytes)
 {
-	const char *units[] = { "Byte", "KB", "MB", "GB", "TB", "PB", "EB" };
-	int i = 0;
-	double final = *ptr_bytes;
+    const char *units[] = { "Byte", "KB", "MB", "GB", "TB", "PB", "EB" };
+    int i = 0;
+    double final = *ptr_bytes;
 
-	while (i < 7 && final >= 1024) {
-		final /= 1024;
-		i++;
-	}
-	*ptr_bytes = final;
-	return units[i];
+    while (i < 7 && final >= 1024) {
+        final /= 1024;
+        i++;
+    }
+    *ptr_bytes = final;
+    return units[i];
 }
 
 int is_my_file(const char *filename)
 {
-	const char *p = filename;
+    const char *p = filename;
 
-	if (!p || !isdigit(*p))
-		return 0;
+    if (!p || !isdigit(*p))
+        return 0;
 
-	/* Skip digits. */
-	do {
-		p++;
-	} while (isdigit(*p));
+    /* Skip digits. */
+    do {
+        p++;
+    } while (isdigit(*p));
 
-	return	(p[0] == '.') && (p[1] == 'h') && (p[2] == '2') &&
-		(p[3] == 'w') && (p[4] == '\0');
+    return    (p[0] == '.') && (p[1] == 'h') && (p[2] == '2') &&
+        (p[3] == 'w') && (p[4] == '\0');
 }
 
 char *full_fn_from_number(const char **filename, const char *path, long num)
 {
     //TODO cleanup
-	char *str = malloc(128);
-	assert(sprintf(str, "%s/%li.h2w", path, num + 1) > 0);
-	*filename = str + strlen(path) + 1;
-	return str;
+    char *str = malloc(128);
+    assert(sprintf(str, "%s/%li.h2w", path, num + 1) > 0);
+    *filename = str + strlen(path) + 1;
+    return str;
 }
 
 /* Parse @param and return the start-at parameter.
@@ -61,172 +61,172 @@ char *full_fn_from_number(const char **filename, const char *path, long num)
 
 /*TODO static inline*/ int is_param(const char *text, const char *param)
 {
-	return !strncmp(param, text, strlen(text));
+    return !strncmp(param, text, strlen(text));
 }
 
 static long parse_long_param(const char *param)
 {
-	char *endptr;
-	long value;
+    char *endptr;
+    long value;
 
-	/* Skip text. */
-	while (*param != '=') {
-		if (*param == '\0')
-			return -1;
-		param++;
-	}
-	param++; /* Skip '='. */
+    /* Skip text. */
+    while (*param != '=') {
+        if (*param == '\0')
+            return -1;
+        param++;
+    }
+    param++; /* Skip '='. */
 
-	value = strtol(param, &endptr, 10);
-	if (*endptr != '\0')
-		return -1;
+    value = strtol(param, &endptr, 10);
+    if (*endptr != '\0')
+        return -1;
 
-	return (value <= 0 || value == LONG_MAX) ? -1 : value - 1;
+    return (value <= 0 || value == LONG_MAX) ? -1 : value - 1;
 }
 
 static int parse_param(const char *param, long *pstart_at, long *pend_at)
 {
-	if (is_param(START_AT_TEXT, param))
-		*pstart_at = parse_long_param(param);
-	else if (is_param(END_AT_TEXT, param))
-		*pend_at = parse_long_param(param);
-	else
-		return 1;
-	return 0;
+    if (is_param(START_AT_TEXT, param))
+        *pstart_at = parse_long_param(param);
+    else if (is_param(END_AT_TEXT, param))
+        *pend_at = parse_long_param(param);
+    else
+        return 1;
+    return 0;
 }
 
 int parse_args(const char *name, int argc, char **argv,
-	long *pstart_at, long *pend_at, const char **ppath)
+    long *pstart_at, long *pend_at, const char **ppath)
 {
-	*pstart_at = 0;
-	*pend_at = LONG_MAX - 1;
+    *pstart_at = 0;
+    *pend_at = LONG_MAX - 1;
 
-	switch (argc) {
-	case 2:
-		*ppath = argv[1];
-		break;
+    switch (argc) {
+    case 2:
+        *ppath = argv[1];
+        break;
 
-	case 3:
-		if (parse_param(argv[1], pstart_at, pend_at))
-			goto error;
-		*ppath = argv[2];
-		break;
+    case 3:
+        if (parse_param(argv[1], pstart_at, pend_at))
+            goto error;
+        *ppath = argv[2];
+        break;
 
-	case 4:
-		if (parse_param(argv[1], pstart_at, pend_at))
-			goto error;
-		if (parse_param(argv[2], pstart_at, pend_at))
-			goto error;
-		*ppath = argv[3];
-		break;
+    case 4:
+        if (parse_param(argv[1], pstart_at, pend_at))
+            goto error;
+        if (parse_param(argv[2], pstart_at, pend_at))
+            goto error;
+        *ppath = argv[3];
+        break;
 
-	default:
-		goto error;
-	}
+    default:
+        goto error;
+    }
 
-	if (*pstart_at >= 0 && *pend_at >= 0 && *pstart_at <= *pend_at)
-		return 0;
+    if (*pstart_at >= 0 && *pend_at >= 0 && *pstart_at <= *pend_at)
+        return 0;
 
 error:
-	print_header(stderr, name);
-	fprintf(stderr, "Usage: f3%s [%sNUM] [%sNUM] <PATH>\n",
-		name, START_AT_TEXT, END_AT_TEXT);
-	return 1;
+    print_header(stderr, name);
+    fprintf(stderr, "Usage: f3%s [%sNUM] [%sNUM] <PATH>\n",
+        name, START_AT_TEXT, END_AT_TEXT);
+    return 1;
 }
 
 static long number_from_filename(const char *filename)
 {
-	const char *p;
-	long num;
+    const char *p;
+    long num;
 
-	assert(is_my_file(filename));
+    assert(is_my_file(filename));
 
-	p = filename;
-	num = 0;
-	do {
-		num = num * 10 + (*p - '0');
-		p++;
-	} while (isdigit(*p));
+    p = filename;
+    num = 0;
+    do {
+        num = num * 10 + (*p - '0');
+        p++;
+    } while (isdigit(*p));
 
-	return num - 1;
+    return num - 1;
 }
 
 /* Don't call this function directly, use ls_my_files() instead. */
 static long *__ls_my_files(DIR *dir, long start_at, long end_at,
-	size_t *pcount, size_t  *pindex)
+    size_t *pcount, size_t  *pindex)
 {
-	struct dirent *entry;
-	const char *filename;
-	long number, *ret;
-	size_t my_index;
+    struct dirent *entry;
+    const char *filename;
+    long number, *ret;
+    size_t my_index;
 
-	entry = readdir(dir);
-	if (!entry) {
-		ret = malloc(sizeof(long) * (*pcount + 1));
-		assert(ret);
-		*pindex = *pcount - 1;
-		ret[*pcount] = -1;
-		closedir(dir);
-		return ret;
-	}
+    entry = readdir(dir);
+    if (!entry) {
+        ret = malloc(sizeof(long) * (*pcount + 1));
+        assert(ret);
+        *pindex = *pcount - 1;
+        ret[*pcount] = -1;
+        closedir(dir);
+        return ret;
+    }
 
-	filename = entry->d_name;
-	if (!is_my_file(filename))
-		return __ls_my_files(dir, start_at, end_at, pcount, pindex);
+    filename = entry->d_name;
+    if (!is_my_file(filename))
+        return __ls_my_files(dir, start_at, end_at, pcount, pindex);
 
-	/* Cache @number because @entry may go away. */
-	number = number_from_filename(filename);
+    /* Cache @number because @entry may go away. */
+    number = number_from_filename(filename);
 
-	/* Ignore files before @start_at and after @end_at. */
-	if (number < start_at || end_at < number)
-		return __ls_my_files(dir, start_at, end_at, pcount, pindex);
+    /* Ignore files before @start_at and after @end_at. */
+    if (number < start_at || end_at < number)
+        return __ls_my_files(dir, start_at, end_at, pcount, pindex);
 
-	(*pcount)++;
-	ret = __ls_my_files(dir, start_at, end_at, pcount, &my_index);
-	ret[my_index] = number;
-	*pindex = my_index - 1;
-	return ret;
+    (*pcount)++;
+    ret = __ls_my_files(dir, start_at, end_at, pcount, &my_index);
+    ret[my_index] = number;
+    *pindex = my_index - 1;
+    return ret;
 }
 
 /* To be used with qsort(3). */
 static int cmpintp(const void *p1, const void *p2)
 {
-	return (int)(*(const long *)p1 - *(const long *)p2);
+    return (int)(*(const long *)p1 - *(const long *)p2);
 }
 
 const long *ls_my_files(const char *path, long start_at, long end_at)
 {
-	DIR *dir = opendir(path);
-	size_t my_count;
-	size_t my_index;
-	long *ret;
+    DIR *dir = opendir(path);
+    size_t my_count;
+    size_t my_index;
+    long *ret;
 
-	if (!dir)
-		fprintf(stderr, "Can't open path %s: %s\n", path, strerror(errno));
+    if (!dir)
+        fprintf(stderr, "Can't open path %s: %s\n", path, strerror(errno));
 
-	my_count = 0;
-	ret = __ls_my_files(dir, start_at, end_at, &my_count, &my_index);
-	assert(my_index == -1);
-	qsort(ret, my_count, sizeof(*ret), cmpintp);
-	return ret;
+    my_count = 0;
+    ret = __ls_my_files(dir, start_at, end_at, &my_count, &my_index);
+    assert(my_index == -1);
+    qsort(ret, my_count, sizeof(*ret), cmpintp);
+    return ret;
 }
 
 void print_header(FILE *f, const char *name)
 {
-	fprintf(f,
-	"F3 %s " F3_STR_VERSION "\n"
-	"Copyright (C) 2010 Digirati Internet LTDA.\n"
-	"This is free software; see the source for copying conditions.\n"
-	"\n", name);
+    fprintf(f,
+    "F3 %s " F3_STR_VERSION "\n"
+    "Copyright (C) 2010 Digirati Internet LTDA.\n"
+    "This is free software; see the source for copying conditions.\n"
+    "\n", name);
 }
 
 long delay_ms(const struct timeval *t1, const struct timeval *t2) {
-    return	(t2->tv_sec  - t1->tv_sec)  * 1000 +
+    return    (t2->tv_sec  - t1->tv_sec)  * 1000 +
               (t2->tv_usec - t1->tv_usec) / 1000;
 }
 
 uint64_t pseudornd_number(uint64_t prv_number) {
-	return prv_number * 4294967311ULL + 17;
+    return prv_number * 4294967311ULL + 17;
 }
 
 #if __APPLE__ && __MACH__
@@ -234,22 +234,22 @@ uint64_t pseudornd_number(uint64_t prv_number) {
 /* This function is a _rough_ approximation of fdatasync(2). */
 int fdatasync(int fd)
 {
-	return fcntl(fd, F_FULLFSYNC);
+    return fcntl(fd, F_FULLFSYNC);
 }
 
 /* This function is a _rough_ approximation of posix_fadvise(2). */
 int posix_fadvise(int fd, off_t offset, off_t len, int advice)
 {
-	UNUSED(offset);
-	UNUSED(len);
-	switch (advice) {
-	case POSIX_FADV_SEQUENTIAL:
-		return fcntl(fd, F_RDAHEAD, 1);
-	case POSIX_FADV_DONTNEED:
-		return fcntl(fd, F_NOCACHE, 1);
-	default:
-		assert(0);
-	}
+    UNUSED(offset);
+    UNUSED(len);
+    switch (advice) {
+    case POSIX_FADV_SEQUENTIAL:
+        return fcntl(fd, F_RDAHEAD, 1);
+    case POSIX_FADV_DONTNEED:
+        return fcntl(fd, F_NOCACHE, 1);
+    default:
+        assert(0);
+    }
 }
 
-#endif	/* Apple Macintosh */
+#endif    /* Apple Macintosh */

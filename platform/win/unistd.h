@@ -1,8 +1,8 @@
 #ifndef _unistd_H_
 #define _unistd_H_
 
-#define POSIX_FADV_SEQUENTIAL	2 /* Expect sequential page references.	*/
-#define POSIX_FADV_DONTNEED	4 /* Don't need these pages.		*/
+#define POSIX_FADV_SEQUENTIAL    2 /* Expect sequential page references.    */
+#define POSIX_FADV_DONTNEED    4 /* Don't need these pages.        */
 
 #define fdatasync(fd) 0
 #define posix_fadvise(fd, offset, len, advice) 0

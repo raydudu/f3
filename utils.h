@@ -1,9 +1,9 @@
 #ifndef HEADER_UTILS_H
 #define HEADER_UTILS_H
 
-#include <stdio.h>	/* For type FILE.	*/
-#include <sys/time.h>	/* For struct timeval.	*/
-#include <stdint.h>	/* For type uint64_t.	*/
+#include <stdio.h>    /* For type FILE.    */
+#include <sys/time.h>    /* For struct timeval.    */
+#include <stdint.h>    /* For type uint64_t.    */
 
 #define SECTOR_SIZE (512)
 #define GIGABYTES   (1024 * 1024 * 1024)
@@ -28,22 +28,22 @@ void print_header(FILE *f, const char *name);
 
 uint64_t pseudornd_number(uint64_t prv_number);
 
-#define UNUSED(x)	((void)(x))
+#define UNUSED(x)    ((void)(x))
 
 #if __APPLE__ && __MACH__
 
-#include <unistd.h>	/* For type off_t.	*/
+#include <unistd.h>    /* For type off_t.    */
 
-#define POSIX_FADV_SEQUENTIAL	2 /* Expect sequential page references.	*/
-#define POSIX_FADV_DONTNEED	4 /* Don't need these pages.		*/
+#define POSIX_FADV_SEQUENTIAL    2 /* Expect sequential page references.    */
+#define POSIX_FADV_DONTNEED    4 /* Don't need these pages.        */
 
 int fdatasync(int fd);
 int posix_fadvise(int fd, off_t offset, off_t len, int advice);
 
-#endif	/* Apple Macintosh */
+#endif    /* Apple Macintosh */
 
 #ifdef __FreeBSD__
 #define fdatasync(fd) fsync(fd)
 #endif
 
-#endif	/* HEADER_UTILS_H */
+#endif    /* HEADER_UTILS_H */

@@ -25,14 +25,14 @@
     }
 }
 
-#define TOLERANCE	2
+#define TOLERANCE    2
 
-#define PRINT_STATUS(s)	printf("%s%7" PRIu64 "/%9" PRIu64 "/%7" PRIu64 "/%7" \
-	PRIu64, (s), *ptr_ok, *ptr_corrupted, *ptr_changed, *ptr_overwritten)
+#define PRINT_STATUS(s)    printf("%s%7" PRIu64 "/%9" PRIu64 "/%7" PRIu64 "/%7" \
+    PRIu64, (s), *ptr_ok, *ptr_corrupted, *ptr_changed, *ptr_overwritten)
 
-#define BLANK	"                                 "
-#define CLEAR	("\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b" \
-		 "\b\b\b\b\b\b\b\b\b\b\b\b\b")
+#define BLANK    "                                 "
+#define CLEAR    ("\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b" \
+         "\b\b\b\b\b\b\b\b\b\b\b\b\b")
 
 static void validate_file(const char *path, long number,
                           uint64_t *ptr_ok, uint64_t *ptr_corrupted, uint64_t *ptr_changed,
@@ -64,9 +64,9 @@ static void validate_file(const char *path, long number,
     fflush(stdout);
 #ifdef __CYGWIN__
     /* We don't need write access, but some kernels require that
-	 * the file descriptor passed to fdatasync(2) to be writable.
-	 */
-	f = fopen(full_fn, "rb+");
+     * the file descriptor passed to fdatasync(2) to be writable.
+     */
+    f = fopen(full_fn, "rb+");
 #else
     f = fopen(full_fn, "rb");
 #endif

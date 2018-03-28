@@ -52,38 +52,38 @@ enum flow_state_t {
 
 struct flow {
     /* Total number of bytes to be written. */
-    uint64_t	total_size;
+    uint64_t    total_size;
     /* Total number of bytes already written. */
-    uint64_t	total_written;
+    uint64_t    total_written;
     /* If true, show progress. */
-    int		progress;
+    int        progress;
     /* Writing rate in bytes. */
-    size_t		block_size;
+    size_t        block_size;
     /* Increment to apply to @blocks_per_delay. */
-    int		step;
+    int        step;
     /* Blocks to write before measurement. */
-    int		blocks_per_delay;
+    int        blocks_per_delay;
     /* Delay in miliseconds. */
-    int		delay_ms;
+    int        delay_ms;
     /* Number of measurements after reaching FW_STEADY state. */
-    uint64_t	measurements;
+    uint64_t    measurements;
     /* Number of measured blocks. */
-    uint64_t	measured_blocks;
+    uint64_t    measured_blocks;
     /* State. */
     enum flow_state_t state;
     /* Number of characters to erase before printing out progress. */
-    int		erase;
+    int        erase;
 
     /*
      * Initialized while measuring
      */
 
     /* Number of blocks written since last measurement. */
-    int		written_blocks;
+    int        written_blocks;
     /* Range of blocks_per_delay while in FW_SEARCH state. */
-    int		bpd1, bpd2;
+    int        bpd1, bpd2;
     /* Time measurements. */
-    struct timeval	t1, t2;
+    struct timeval    t1, t2;
 };
 
 /*TODO static inline*/ void move_to_inc_at_start(struct flow *fw)
@@ -94,15 +94,15 @@ struct flow {
 
 static void init_flow(struct flow *fw, uint64_t total_size, int progress)
 {
-    fw->total_size		= total_size;
-    fw->total_written	= 0;
-    fw->progress		= progress;
-    fw->block_size		= 1024;	/* 1KB		*/
-    fw->blocks_per_delay	= 1;	/* 1KB/s	*/
-    fw->delay_ms		= 1000;	/* 1s		*/
-    fw->measurements	= 0;
-    fw->measured_blocks	= 0;
-    fw->erase		= 0;
+    fw->total_size        = total_size;
+    fw->total_written    = 0;
+    fw->progress        = progress;
+    fw->block_size        = 1024;    /* 1KB        */
+    fw->blocks_per_delay    = 1;    /* 1KB/s    */
+    fw->delay_ms        = 1000;    /* 1s        */
+    fw->measurements    = 0;
+    fw->measured_blocks    = 0;
+    fw->erase        = 0;
     assert(fw->block_size > 0);
     assert(fw->block_size % SECTOR_SIZE == 0);
 
@@ -127,15 +127,15 @@ static void erase(int count)
 {
     if (count <= 0)
         return;
-    repeat_ch('\b',	count);
-    repeat_ch(' ',	count);
-    repeat_ch('\b',	count);
+    repeat_ch('\b',    count);
+    repeat_ch(' ',    count);
+    repeat_ch('\b',    count);
 }
 
 /* Average writing speed in byte/s. */
 /*TODO static inline*/ double get_avg_speed(struct flow *fw)
 {
-    return	(double)(fw->measured_blocks * fw->block_size * 1000) /
+    return    (double)(fw->measured_blocks * fw->block_size * 1000) /
               (double)(fw->measurements * fw->delay_ms);
 }
 
